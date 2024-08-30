@@ -1,8 +1,10 @@
-import { FaRegComment } from "react-icons/fa";
+import {
+  FaRegComment,
+  FaRegHeart,
+  FaRegBookmark,
+  FaTrash,
+} from "react-icons/fa";
 import { BiRepost } from "react-icons/bi";
-import { FaRegHeart } from "react-icons/fa";
-import { FaRegBookmark } from "react-icons/fa6";
-import { FaTrash } from "react-icons/fa";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -10,6 +12,7 @@ import { toast } from "react-hot-toast";
 
 import LoadingSpinner from "./LoadingSpinner";
 import { formatPostDate } from "../../utils/date";
+import VerificationBadge from "../../components/common/VerificationBadge.jsx";
 
 const Post = ({ post }) => {
   const [comment, setComment] = useState("");
@@ -17,9 +20,7 @@ const Post = ({ post }) => {
   const queryClient = useQueryClient();
   const postOwner = post.user;
   const isLiked = post.likes.includes(authUser._id);
-
   const isMyPost = authUser._id === post.user._id;
-
   const formattedDate = formatPostDate(post.createdAt);
 
   const { mutate: deletePost, isPending: isDeleting } = useMutation({
@@ -60,10 +61,6 @@ const Post = ({ post }) => {
       }
     },
     onSuccess: (updatedLikes) => {
-      // this is not the best UX, bc it will refetch all posts
-      // queryClient.invalidateQueries({ queryKey: ["posts"] });
-
-      // instead, update the cache directly for that post
       queryClient.setQueryData(["posts"], (oldData) => {
         return oldData.map((p) => {
           if (p._id === post._id) {
@@ -123,6 +120,15 @@ const Post = ({ post }) => {
     likePost();
   };
 
+  // Check if the post owner is verified
+  const isVerified = [
+    "iameenalam",
+    "Cristiano",
+    "elonmusk",
+    "imVkohli",
+    "babarazam258",
+  ].includes(postOwner.username);
+
   return (
     <>
       <div className="flex gap-2 items-start p-4 border-b border-gray-700">
@@ -131,13 +137,20 @@ const Post = ({ post }) => {
             to={`/profile/${postOwner.username}`}
             className="w-8 rounded-full overflow-hidden"
           >
-            <img src={postOwner.profileImg || "/avatar-placeholder.png"} />
+            <img
+              src={postOwner.profileImg || "/avatar-placeholder.png"}
+              alt={`${postOwner.username}'s avatar`}
+            />
           </Link>
         </div>
         <div className="flex flex-col flex-1">
           <div className="flex gap-2 items-center">
-            <Link to={`/profile/${postOwner.username}`} className="font-bold">
+            <Link
+              to={`/profile/${postOwner.username}`}
+              className="font-bold flex items-center"
+            >
               {postOwner.fullName}
+              <VerificationBadge isVerified={isVerified} />
             </Link>
             <span className="text-gray-700 flex gap-1 text-sm">
               <Link to={`/profile/${postOwner.username}`}>
@@ -154,7 +167,6 @@ const Post = ({ post }) => {
                     onClick={handleDeletePost}
                   />
                 )}
-
                 {isDeleting && <LoadingSpinner size="sm" />}
               </span>
             )}
@@ -179,12 +191,11 @@ const Post = ({ post }) => {
                     .showModal()
                 }
               >
-                <FaRegComment className="w-4 h-4  text-slate-500 group-hover:text-sky-400" />
+                <FaRegComment className="w-4 h-4 text-slate-500 group-hover:text-sky-400" />
                 <span className="text-sm text-slate-500 group-hover:text-sky-400">
                   {post.comments.length}
                 </span>
               </div>
-              {/* We're using Modal Component from DaisyUI */}
               <dialog
                 id={`comments_modal${post._id}`}
                 className="modal border-none outline-none"
@@ -206,14 +217,27 @@ const Post = ({ post }) => {
                                 comment.user.profileImg ||
                                 "/avatar-placeholder.png"
                               }
+                              alt={`${comment.user.username}'s avatar`}
                             />
                           </div>
                         </div>
                         <div className="flex flex-col">
                           <div className="flex items-center gap-1">
-                            <span className="font-bold">
+                            <Link
+                              to={`/profile/${comment.user.username}`}
+                              className="font-bold flex items-center"
+                            >
                               {comment.user.fullName}
-                            </span>
+                              <VerificationBadge
+                                isVerified={[
+                                  "iameenalam",
+                                  "Cristiano",
+                                  "elonmusk",
+                                  "imVkohli",
+                                  "babarazam258",
+                                ].includes(comment.user.username)}
+                              />
+                            </Link>
                             <span className="text-gray-700 text-sm">
                               @{comment.user.username}
                             </span>
@@ -228,7 +252,7 @@ const Post = ({ post }) => {
                     onSubmit={handlePostComment}
                   >
                     <textarea
-                      className="textarea w-full p-1 rounded text-md resize-none border focus:outline-none  border-gray-800"
+                      className="textarea w-full p-1 rounded text-md resize-none border focus:outline-none border-gray-800"
                       placeholder="Add a comment..."
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
@@ -243,7 +267,7 @@ const Post = ({ post }) => {
                 </form>
               </dialog>
               <div className="flex gap-1 items-center group cursor-pointer">
-                <BiRepost className="w-6 h-6  text-slate-500 group-hover:text-green-500" />
+                <BiRepost className="w-6 h-6 text-slate-500 group-hover:text-green-500" />
                 <span className="text-sm text-slate-500 group-hover:text-green-500">
                   0
                 </span>
@@ -259,9 +283,8 @@ const Post = ({ post }) => {
                 {isLiked && !isLiking && (
                   <FaRegHeart className="w-4 h-4 cursor-pointer text-pink-500 " />
                 )}
-
                 <span
-                  className={`text-sm  group-hover:text-pink-500 ${
+                  className={`text-sm group-hover:text-pink-500 ${
                     isLiked ? "text-pink-500" : "text-slate-500"
                   }`}
                 >
@@ -278,4 +301,5 @@ const Post = ({ post }) => {
     </>
   );
 };
+
 export default Post;

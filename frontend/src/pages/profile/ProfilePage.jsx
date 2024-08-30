@@ -4,9 +4,11 @@ import { Link, useParams } from "react-router-dom";
 import Posts from "../../components/common/Posts";
 import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
 import EditProfileModal from "./EditProfileModal";
+import VerificationBadge from "../../components/common/VerificationBadge.jsx";
 
 import { POSTS } from "../../utils/db/dummy";
 
+import "remixicon/fonts/remixicon.css";
 import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
 import { FaLink } from "react-icons/fa";
@@ -73,9 +75,34 @@ const ProfilePage = () => {
     refetch();
   }, [username, refetch]);
 
+  const verifiedUsernames = [
+    "iameenalam",
+    "Cristiano",
+    "elonmusk",
+    "imVkohli",
+    "babarazam258",
+  ];
+
+  const isVerified = verifiedUsernames.includes(user?.username);
+
+  // Define followers and following count for specific usernames
+  const userStats = {
+    iameenalam: { following: "0", followers: "227.4M" },
+    Cristiano: { following: "69", followers: "112.8M" },
+    elonmusk: { following: "729", followers: "195.9M" },
+    imVkohli: { following: "64", followers: "64.8M" },
+    babarazam258: { following: "44", followers: "5.3M" },
+  };
+
+  // Use default counts if username is not in the stats object
+  const followingCount =
+    userStats[user?.username]?.following || user?.following.length;
+  const followersCount =
+    userStats[user?.username]?.followers || user?.followers.length;
+
   return (
     <>
-      <div className="flex-[4_4_0]  border-r border-gray-700 min-h-screen ">
+      <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
         {/* HEADER */}
         {(isLoading || isRefetching) && <ProfileHeaderSkeleton />}
         {!isLoading && !isRefetching && !user && (
@@ -172,9 +199,19 @@ const ProfilePage = () => {
                 )}
               </div>
 
-              <div className="flex flex-col gap-4 mt-14 px-4">
+              <div className="flex flex-col gap-4 mt-6 px-4">
                 <div className="flex flex-col">
-                  <span className="font-bold text-lg">{user?.fullName}</span>
+                  <span className="font-bold text-lg flex items-center">
+                    {user?.fullName}
+                    <div className="relative group">
+                      <VerificationBadge isVerified={isVerified} />
+                      {isVerified && (
+                        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 bg-gray-700 text-white text-xs rounded py-1 px-2 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                          Verified Account
+                        </div>
+                      )}
+                    </div>
+                  </span>
                   <span className="text-sm text-slate-500">
                     @{user?.username}
                   </span>
@@ -192,7 +229,6 @@ const ProfilePage = () => {
                           rel="noreferrer"
                           className="text-sm text-blue-500 hover:underline"
                         >
-                          {/* Updated this after recording the video. I forgot to update this while recording, sorry, thx. */}
                           {user?.link}
                         </a>
                       </>
@@ -207,15 +243,11 @@ const ProfilePage = () => {
                 </div>
                 <div className="flex gap-2">
                   <div className="flex gap-1 items-center">
-                    <span className="font-bold text-xs">
-                      {user?.following.length}
-                    </span>
+                    <span className="font-bold text-xs">{followingCount}</span>
                     <span className="text-slate-500 text-xs">Following</span>
                   </div>
                   <div className="flex gap-1 items-center">
-                    <span className="font-bold text-xs">
-                      {user?.followers.length}
-                    </span>
+                    <span className="font-bold text-xs">{followersCount}</span>
                     <span className="text-slate-500 text-xs">Followers</span>
                   </div>
                 </div>
@@ -236,7 +268,7 @@ const ProfilePage = () => {
                 >
                   Likes
                   {feedType === "likes" && (
-                    <div className="absolute bottom-0 w-10  h-1 rounded-full bg-primary" />
+                    <div className="absolute bottom-0 w-10 h-1 rounded-full bg-primary" />
                   )}
                 </div>
               </div>

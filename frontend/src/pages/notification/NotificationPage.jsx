@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import VerificationBadge from "../../components/common/VerificationBadge.jsx"; // Import VerificationBadge
 
 import { IoSettingsOutline } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
@@ -46,6 +47,15 @@ const NotificationPage = () => {
       toast.error(error.message);
     },
   });
+
+  // Define a list of verified usernames for checking
+  const verifiedUsernames = [
+    "iameenalam",
+    "Cristiano",
+    "elonmusk",
+    "imVkohli",
+    "babarazam258",
+  ];
 
   return (
     <>
@@ -91,12 +101,18 @@ const NotificationPage = () => {
                         notification.from.profileImg ||
                         "/avatar-placeholder.png"
                       }
+                      alt={`${notification.from.username}'s avatar`}
                     />
                   </div>
                 </div>
                 <div className="flex gap-1">
-                  <span className="font-bold">
+                  <span className="font-bold flex items-center">
                     @{notification.from.username}
+                    <VerificationBadge
+                      isVerified={verifiedUsernames.includes(
+                        notification.from.username
+                      )}
+                    />
                   </span>{" "}
                   {notification.type === "follow"
                     ? "followed you"
