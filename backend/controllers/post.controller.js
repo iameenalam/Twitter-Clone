@@ -6,14 +6,14 @@ import { v2 as cloudinary } from "cloudinary";
 export const createPost = async (req, res) => {
 	try {
 		const { text } = req.body;
-		let { img } = req.body;
+		let { img, video } = req.body;
 		const userId = req.user._id.toString();
 
 		const user = await User.findById(userId);
 		if (!user) return res.status(404).json({ message: "User not found" });
 
-		if (!text && !img) {
-			return res.status(400).json({ error: "Post must have text or image" });
+		if (!text && !img && !video) {
+			return res.status(400).json({ error: "Post must have text, image, or video" });
 		}
 
 		if (img) {
@@ -21,10 +21,18 @@ export const createPost = async (req, res) => {
 			img = uploadedResponse.secure_url;
 		}
 
+		if (video) {
+			const uploadedResponse = await cloudinary.uploader.upload(video, {
+				resource_type: "video",
+			});
+			video = uploadedResponse.secure_url;
+		}
+
 		const newPost = new Post({
 			user: userId,
 			text,
 			img,
+			video,
 		});
 
 		await newPost.save();
@@ -34,6 +42,7 @@ export const createPost = async (req, res) => {
 		console.log("Error in createPost controller: ", error);
 	}
 };
+
 
 export const deletePost = async (req, res) => {
 	try {
@@ -51,6 +60,11 @@ export const deletePost = async (req, res) => {
 			await cloudinary.uploader.destroy(imgId);
 		}
 
+		if (post.video) {
+			const videoId = post.video.split("/").pop().split(".")[0];
+			await cloudinary.uploader.destroy(videoId, { resource_type: "video" });
+		}
+
 		await Post.findByIdAndDelete(req.params.id);
 
 		res.status(200).json({ message: "Post deleted successfully" });
@@ -59,6 +73,7 @@ export const deletePost = async (req, res) => {
 		res.status(500).json({ error: "Internal server error" });
 	}
 };
+
 
 export const commentOnPost = async (req, res) => {
 	try {
